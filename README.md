@@ -1,7 +1,7 @@
 # RubikCube
 Rubik's cube made with javafx3D
 # How to run
-* Download JavaFX-SDK
+* Download the JavaFX-SDK
 * Run the file named `run.sh` with the command:
 ```bash
 ./run.sh <FX-Sdk-libfolder>
@@ -9,3 +9,4 @@ Rubik's cube made with javafx3D
 # Android
 Install [this apk](https://github.com/OrangoMango/RubikCube/raw/main/rubikcube.apk) on your android device
 # Screenshot
+![Screenshot_20220619-133924](https://user-images.githubusercontent.com/61402409/174483134-4b68ea9f-67f0-45b9-b375-a0d82c343b51.png)
