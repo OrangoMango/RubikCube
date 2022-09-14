@@ -72,29 +72,34 @@ public class MainApplication extends Application {
 		controls.setHgap(5);
 		controls.setVgap(5);
 		Button front = new Button("F");
-		front.setOnAction(e -> Move.FRONT_CLOCKWISE(cube));
+		front.setOnAction(e -> Move.applyMove("F", cube));
 		Button frontP = new Button("F'");
-		frontP.setOnAction(e -> Move.FRONT_COUNTERCLOCKWISE(cube));
+		frontP.setOnAction(e -> Move.applyMove("f", cube));
 		Button back = new Button("B");
-		back.setOnAction(e -> Move.BACK_CLOCKWISE(cube));
+		back.setOnAction(e -> Move.applyMove("B", cube));
 		Button backP = new Button("B'");
-		backP.setOnAction(e -> Move.BACK_COUNTERCLOCKWISE(cube));
+		backP.setOnAction(e -> Move.applyMove("b", cube));
 		Button right = new Button("R");
-		right.setOnAction(e -> Move.RIGHT_CLOCKWISE(cube));
+		right.setOnAction(e -> Move.applyMove("R", cube));
 		Button rightP = new Button("R'");
-		rightP.setOnAction(e -> Move.RIGHT_COUNTERCLOCKWISE(cube));
+		rightP.setOnAction(e -> Move.applyMove("r", cube));
 		Button left = new Button("L");
-		left.setOnAction(e -> Move.LEFT_CLOCKWISE(cube));
+		left.setOnAction(e -> Move.applyMove("L", cube));
 		Button leftP = new Button("L'");
-		leftP.setOnAction(e -> Move.LEFT_COUNTERCLOCKWISE(cube));
+		leftP.setOnAction(e -> Move.applyMove("l", cube));
 		Button up = new Button("U");
-		up.setOnAction(e -> Move.UP_CLOCKWISE(cube));
+		up.setOnAction(e -> Move.applyMove("U", cube));
 		Button upP = new Button("U'");
-		upP.setOnAction(e -> Move.UP_COUNTERCLOCKWISE(cube));
+		upP.setOnAction(e -> Move.applyMove("u", cube));
 		Button down = new Button("D");
-		down.setOnAction(e -> Move.DOWN_CLOCKWISE(cube));
+		down.setOnAction(e -> Move.applyMove("D", cube));
 		Button downP = new Button("D'");
-		downP.setOnAction(e -> Move.DOWN_COUNTERCLOCKWISE(cube));
+		downP.setOnAction(e -> Move.applyMove("d", cube));
+		
+		Button yP = new Button("Y+");
+		yP.setOnAction(e -> cube.rotateCubeY(1));
+		Button yM = new Button("Y-");
+		yM.setOnAction(e -> cube.rotateCubeY(-1));
 
 		/*
 		Button rxp = new Button("RX +");
@@ -118,11 +123,13 @@ public class MainApplication extends Application {
 		reassemble.setOnAction(e -> {
 			if (scr || moves.size() == 0) return;
 			reset.setDisable(true);
+			Move.ANIMATION = false;
+			Cube.MOVE_DURATION = 10;
 			scr = true;
 			Collections.reverse(moves);
-			Timeline reassembling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.3), evt -> {
+			Timeline reassembling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
 				String mv = moves.get(counter++);
-				Move.applyMove("FRULBD".contains(mv) ? mv.toLowerCase() : mv.toUpperCase(), cube);
+				Move.applyMove(Move.CAPS.contains(mv) ? mv.toLowerCase() : mv.toUpperCase(), cube);
 				currentMove.setText("Move: "+(Cube.SCRAMBLE_MOVES-counter));
 			}));
 			reassembling.setCycleCount(Cube.SCRAMBLE_MOVES);
@@ -131,6 +138,8 @@ public class MainApplication extends Application {
 				counter = 0;
 				moves.clear();
 				reset.setDisable(false);
+				Move.ANIMATION = true;
+				Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
 			});
 			reassembling.play();
 		});
@@ -139,9 +148,8 @@ public class MainApplication extends Application {
 		input.setPromptText("RUF3F'U'L2B'2");
 		Button read = new Button("Apply");
 		Button oppo = new Button("Opposite");
-		Button solve = new Button("Solve");
+		Button solve = new Button("Solve");		
 		solve.setOnAction(e -> cube.solve());
-		solve.setDisable(true);
 		read.setOnAction(e -> {
 			String parsed = Move.parseNotation(input.getText());
 			if (parsed == null){
@@ -152,7 +160,7 @@ public class MainApplication extends Application {
 			reset.setDisable(true);
 			oppo.setDisable(true);
 			char[] m = parsed.toCharArray();
-			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.3), evt -> Move.applyMove(Character.toString(m[acounter++]), cube)));
+			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> Move.applyMove(Character.toString(m[acounter++]), cube)));
 			moving.setCycleCount(m.length);
 			moving.setOnFinished(evt -> {
 				acounter = 0;
@@ -172,9 +180,9 @@ public class MainApplication extends Application {
 			reset.setDisable(true);
 			oppo.setDisable(true);
 			char[] m = parsed.toCharArray();
-			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.3), evt -> {
+			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
 				String str = Character.toString(m[m.length-1-(acounter++)]);
-				Move.applyMove("FRULBD".contains(str) ? str.toLowerCase() : str.toUpperCase(), cube);
+				Move.applyMove(Move.CAPS.contains(str) ? str.toLowerCase() : str.toUpperCase(), cube);
 			}));
 			moving.setCycleCount(m.length);
 			moving.setOnFinished(evt -> {
@@ -192,8 +200,10 @@ public class MainApplication extends Application {
 			reset.setDisable(true);
 			read.setDisable(true);
 			oppo.setDisable(true);
+			Move.ANIMATION = false;
+			Cube.MOVE_DURATION = 10;
 			scr = true;
-			Timeline scrambling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.3), evt -> {
+			Timeline scrambling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
 				String mv = Move.moves[random.nextInt(Move.moves.length)];
 				moves.add(mv);
 				Move.applyMove(mv, cube);
@@ -206,14 +216,17 @@ public class MainApplication extends Application {
 				reset.setDisable(false);
 				read.setDisable(false);
 				oppo.setDisable(false);
+				Move.ANIMATION = true;
+				Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
 			});
 			scrambling.play();
 		});
 
-		controls.getChildren().addAll(front, frontP, back, backP, right, rightP, left, leftP, up, upP, down, downP, new Separator(), reset, scramble, reassemble, currentMove);
+		controls.getChildren().addAll(front, frontP, back, backP, right, rightP, left, leftP, up, upP, down, downP, yP, yM, new Separator(), reset, scramble, reassemble, currentMove);
 		
-		SubScene scene = new SubScene(new Group(cube.getModel()), bounds.getWidth()-10, bounds.getHeight()*0.70, true, SceneAntialiasing.BALANCED);
+		SubScene scene = new SubScene(new Group(cube.getModel()), bounds.getWidth()-10, bounds.getHeight()*0.65, true, SceneAntialiasing.BALANCED);
 		reset.setOnAction(e -> {
+			moves.clear();
 			cube.generateCube();
 			scene.setRoot(new Group(cube.getModel()));
 			currentMove.setText("Move: 0");

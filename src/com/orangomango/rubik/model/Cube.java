@@ -7,25 +7,42 @@ import javafx.geometry.Point3D;
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.scene.paint.Color;
+
 import java.util.*;
 
-public class Cube {	
+public class Cube{	
 	private InnerCube[][][] cube = new InnerCube[SIZE][SIZE][SIZE];
 	private Rotate rotateX = new Rotate(45, 100, 100, 100, Rotate.X_AXIS);
 	private Rotate rotateY = new Rotate(-45, 100, 100, 100, Rotate.Y_AXIS);
 	private Rotate rotateZ = new Rotate(0, 100, 100, 100, Rotate.Z_AXIS);
-	public int mx, my, mz;
+	private FaceSystem faceSystem = new FaceSystem();
+	public int psY;
+	private Point3D xAxis = Rotate.X_AXIS;
+	private Point3D yAxis = Rotate.Y_AXIS;
+	private Point3D zAxis = Rotate.Z_AXIS;
+	private Group model;
 	
 	public static final int INNER_CUBE_WIDTH = 100;
 	public static final int SIZE = 3;
-	public static final int MOVE_DURATION = 400;
-	public static final int SCRAMBLE_MOVES = 10;
+	public static final int DEFAULT_DURATION = 150;
+	public static int MOVE_DURATION = DEFAULT_DURATION;
+	public static final int SCRAMBLE_MOVES = 70;
 	
 	public Cube(){
 		generateCube();
 	}
 	
+	public FaceSystem getFaces(){
+		return this.faceSystem;
+	}
+	
 	public void generateCube(){
+		psY = 0;
+		this.model = null;
+		this.xAxis = Rotate.X_AXIS;
+		this.yAxis = Rotate.Y_AXIS;
+		this.zAxis = Rotate.Z_AXIS;
+		this.faceSystem = new FaceSystem();
 		for (int z = 0; z < SIZE; z++){
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
@@ -35,15 +52,24 @@ public class Cube {
 		}
 	}
 	
-	private List<InnerCube> findCubesByColor(Color color){
+	public List<InnerCube> findCubesByColor(Color... colors){
 		List<InnerCube> output = new ArrayList<>();
 		
 		for (int z = 0; z < SIZE; z++){
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
 					List<Face.Faces> faces = this.cube[z][y][x].getVisibleFaces();
-					for (Face.Faces f : faces){
-						if (f.getColor() == color){
+					if (faces.size() >= colors.length){
+						boolean accepted = false;
+						for (Face.Faces f : faces){
+							if (Arrays.asList(colors).contains(f.getColor())){
+								accepted = true;
+							} else {
+								accepted = false;
+								break;
+							}
+						}
+						if (accepted){
 							output.add(this.cube[z][y][x]);
 							break;
 						}
@@ -55,18 +81,32 @@ public class Cube {
 		return output;
 	}
 	
-	public List<String> solve(){
-		List<String> solution = new ArrayList<>();
-		
-		// build white face (top)
-		List<InnerCube> whites = findCubesByColor(Color.WHITE);
-		List<InnerCube> middleWhites = new ArrayList<>();
-		for (InnerCube ic : whites){
-			if (ic.getVisibleFaces().size() == 2) middleWhites.add(ic);
+	public void solve(){
+		CubeSolver solver = new CubeSolver(this);
+		solver.solve();
+	}
+	
+	public void rotateCubeY(int direction){
+		if (this.psY == 0 && direction < 0) return;
+		this.psY += direction;
+		Point3D xA = this.zAxis.multiply(direction);
+		Point3D zA = this.xAxis.multiply(-1).multiply(direction);
+		this.xAxis = xA;
+		this.zAxis = zA;
+		this.faceSystem.rotate(-direction, Rotate.Y_AXIS);
+		if (Move.ANIMATION){
+			Timeline loop = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION/9), e -> getModel().getTransforms().add(new Rotate(10*direction, 100, 100, 100, this.yAxis))));
+			loop.setCycleCount(9);
+			loop.play();
 		}
-		System.out.println(middleWhites);
-		
-		return solution;
+		//System.out.println("--- "+this.faceSystem);
+		for (int z = 0; z < SIZE; z++){
+			for (int y = 0; y < SIZE; y++){
+				for (int x = 0; x < SIZE; x++){
+					this.cube[z][y][x].getFaceSystem().rotate(-direction, this.yAxis);
+				}
+			}
+		}
 	}
 	
 	private void sortArray(){
@@ -95,8 +135,9 @@ public class Cube {
 	}
 	
 	public Group getModel(){
+		if (this.model != null) return this.model;
 		Group root = new Group();
-		
+		this.model = root;
 		for (int z = 0; z < SIZE; z++){
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
@@ -109,7 +150,7 @@ public class Cube {
 		return root;
 	}
 	
-	public void rotateX(int index, int direction){
+	public void rotateX(int index, int direction, boolean animation){
 		InnerCube[][] slice = new InnerCube[SIZE][SIZE];
 		
 		// Select the slice from the cube
@@ -131,22 +172,7 @@ public class Cube {
 			}
 		}
 		
-		Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].xAxis));
-				}
-			}
-		}));
-		movement.setCycleCount(9);
-		movement.setOnFinished(e -> {
-			// Remove animation
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
-				}
-			}
-			
+		final Runnable rotatorX = () -> {
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
@@ -158,6 +184,7 @@ public class Cube {
 					slice[y][x].relY = newY;
 					slice[y][x].y = newY+1;
 					slice[y][x].z = newX+1;
+					slice[y][x].getFaceSystem().rotate(direction, this.xAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(-90*direction, slice[y][x].xAxis)));
 					Point3D yA = slice[y][x].zAxis.multiply(direction);
 					Point3D zA = slice[y][x].yAxis.multiply(-1).multiply(direction);
@@ -168,11 +195,33 @@ public class Cube {
 			
 			// Update the array with the new slice
 			this.sortArray();
-		});
-		movement.play();
+		};
+		
+		if (animation){
+			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].xAxis));
+					}
+				}
+			}));
+			movement.setCycleCount(9);
+			movement.setOnFinished(e -> {
+				// Remove animation
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
+					}
+				}
+				rotatorX.run();
+			});
+			movement.play();
+		} else {
+			rotatorX.run();
+		}
 	}
 	
-	public void rotateY(int index, int direction){
+	public void rotateY(int index, int direction, boolean animation){
 		InnerCube[][] slice = new InnerCube[SIZE][SIZE];
 		
 		// Select the slice from the cube
@@ -194,22 +243,7 @@ public class Cube {
 			}
 		}
 		
-		Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].yAxis));
-				}
-			}
-		}));
-		movement.setCycleCount(9);
-		movement.setOnFinished(e -> {
-			// Remove animation
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
-				}
-			}
-			
+		final Runnable rotatorY = () -> {
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
@@ -221,6 +255,7 @@ public class Cube {
 					slice[y][x].relY = newY;
 					slice[y][x].x = newX+1;
 					slice[y][x].z = newY+1;
+					slice[y][x].getFaceSystem().rotate(direction, this.yAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(-90*direction, slice[y][x].yAxis)));
 					Point3D xA = slice[y][x].zAxis.multiply(-1).multiply(direction);
 					Point3D zA = slice[y][x].xAxis.multiply(direction);
@@ -231,11 +266,34 @@ public class Cube {
 			
 			// Update the array with the new slice
 			this.sortArray();
-		});
-		movement.play();
+		};
+		
+		if (animation){
+			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].yAxis));
+					}
+				}
+			}));
+			movement.setCycleCount(9);
+			movement.setOnFinished(e -> {
+				// Remove animation
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
+					}
+				}
+				
+				rotatorY.run();
+			});
+			movement.play();
+		} else {
+			rotatorY.run();
+		}
 	}
 	
-	public void rotateZ(int index, int direction){
+	public void rotateZ(int index, int direction, boolean animation){
 		InnerCube[][] slice = new InnerCube[SIZE][SIZE];
 		
 		// Select the slice from the cube
@@ -257,22 +315,7 @@ public class Cube {
 			}
 		}
 		
-		Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().add(new Rotate(10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].zAxis));
-				}
-			}
-		}));
-		movement.setCycleCount(9);
-		movement.setOnFinished(e -> {
-			// Remove animation
-			for (int y = 0; y < SIZE; y++){
-				for (int x = 0; x < SIZE; x++){
-					slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
-				}
-			}
-		
+		final Runnable rotatorZ = () -> {
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
@@ -284,6 +327,7 @@ public class Cube {
 					slice[y][x].relY = newY;
 					slice[y][x].y = newY+1;
 					slice[y][x].x = newX+1;
+					slice[y][x].getFaceSystem().rotate(direction, this.zAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(90*direction, slice[y][x].zAxis)));
 					Point3D xA = slice[y][x].yAxis.multiply(-1).multiply(direction);
 					Point3D yA = slice[y][x].xAxis.multiply(direction);
@@ -294,16 +338,51 @@ public class Cube {
 			
 			// Update the array with the new slice
 			this.sortArray();
-		});
-		movement.play();
+		};
+		
+		if (animation){
+			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().add(new Rotate(10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].zAxis));
+					}
+				}
+			}));
+			movement.setCycleCount(9);
+			movement.setOnFinished(e -> {
+				// Remove animation
+				for (int y = 0; y < SIZE; y++){
+					for (int x = 0; x < SIZE; x++){
+						slice[y][x].getModel().getTransforms().remove(slice[y][x].getModel().getTransforms().size()-9, slice[y][x].getModel().getTransforms().size());
+					}
+				}
+			
+				rotatorZ.run();
+			});
+			movement.play();
+		} else {
+			rotatorZ.run();
+		}
 	}
 	
-	private InnerCube findCubeByPos(int pX, int pY, int pZ){
+	public InnerCube findCubeByPos(int pX, int pY, int pZ){
 		for (int z = 0; z < SIZE; z++){
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
 					InnerCube ic = this.cube[z][y][x];
 					if (ic.x == pX && ic.y == pY && ic.z == pZ) return ic;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public InnerCube findCubeByViewCoords(int pX, int pY, int pZ){
+		for (int z = 0; z < SIZE; z++){
+			for (int y = 0; y < SIZE; y++){
+				for (int x = 0; x < SIZE; x++){
+					InnerCube ic = this.cube[z][y][x];
+					if (ic.getViewCoords(this).getX() == pX && ic.getViewCoords(this).getY() == pY && ic.getViewCoords(this).getZ() == pZ) return ic;
 				}
 			}
 		}

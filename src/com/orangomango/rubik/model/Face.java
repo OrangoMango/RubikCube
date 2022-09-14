@@ -10,10 +10,10 @@ public class Face {
 	public static enum Faces {
 		TOP(Color.WHITE),
 		BOTTOM(Color.YELLOW),
-		RIGHT(Color.GREEN),
-		LEFT(Color.BLUE),
-		FRONT(Color.ORANGE),
-		BACK(Color.RED);
+		RIGHT(Color.RED),
+		LEFT(Color.ORANGE),
+		FRONT(Color.GREEN),
+		BACK(Color.BLUE);
 		
 		private Color color;
 		
@@ -38,27 +38,27 @@ public class Face {
 		Box box = null;
 		switch (this.face){
 			case TOP:
-				box = new Box(Cube.INNER_CUBE_WIDTH, 1, Cube.INNER_CUBE_WIDTH);
+				box = new Box(Cube.INNER_CUBE_WIDTH, 0, Cube.INNER_CUBE_WIDTH);
 				box.setTranslateY(-Cube.INNER_CUBE_WIDTH/2);
 				break;
 			case BOTTOM:
-				box = new Box(Cube.INNER_CUBE_WIDTH, 1, Cube.INNER_CUBE_WIDTH);
+				box = new Box(Cube.INNER_CUBE_WIDTH, 0, Cube.INNER_CUBE_WIDTH);
 				box.setTranslateY(Cube.INNER_CUBE_WIDTH/2);
 				break;
 			case RIGHT:
-				box = new Box(1, Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH);
+				box = new Box(0, Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH);
 				box.setTranslateX(Cube.INNER_CUBE_WIDTH/2);
 				break;
 			case LEFT:
-				box = new Box(1, Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH);
+				box = new Box(0, Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH);
 				box.setTranslateX(-Cube.INNER_CUBE_WIDTH/2);
 				break;
 			case FRONT:
-				box = new Box(Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH, 1);
+				box = new Box(Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH, 0);
 				box.setTranslateZ(-Cube.INNER_CUBE_WIDTH/2);
 				break;
 			case BACK:
-				box = new Box(Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH, 1);
+				box = new Box(Cube.INNER_CUBE_WIDTH, Cube.INNER_CUBE_WIDTH, 0);
 				box.setTranslateZ(Cube.INNER_CUBE_WIDTH/2);
 				break;
 			default:

@@ -12,6 +12,69 @@ import java.util.*;
 public class InnerCube {
 	private static int identity = 0;
 	
+	public static class ViewCoords {
+		private Cube cube;
+		private double viewX, viewY, viewZ;
+		
+		public ViewCoords(Cube cube, double x, double y, double z){
+			this.cube = cube;
+			this.viewX = x;
+			this.viewY = y;
+			this.viewZ = z;
+		}
+		
+		public void setup(){
+			//System.out.println("Starting from: "+cube.psX+" "+cube.psY+" "+cube.psZ);
+			
+			double rx = Math.toRadians(0);
+			double ry = Math.toRadians(cube.psY*90);
+			double rz = Math.toRadians(0);
+			
+			viewX -= 1;
+			viewY -= 1;
+			viewZ -= 1;
+			
+			// Rotate along x axis
+			double x1, y1, z1;
+			x1 = viewX;
+			y1 = viewY*Math.cos(rx)-viewZ*Math.sin(rx);
+			z1 = viewY*Math.sin(rx)+viewZ*Math.cos(rx);
+			
+			// Rotate along y axis
+			double x2, y2, z2;
+			x2 = x1*Math.cos(ry)+z1*Math.sin(ry);
+			y2 = y1;
+			z2 = z1*Math.cos(ry)-x1*Math.sin(ry);
+			
+			// Rotate along z axis
+			double x3, y3, z3;
+			x3 = x2*Math.cos(rz)-y2*Math.sin(rz);
+			y3 = x2*Math.sin(rz)+y2*Math.cos(rz);
+			z3 = z2;
+			
+			this.viewX = x3+1;
+			this.viewY = y3+1;
+			this.viewZ = z3+1;
+		}
+		
+		public int getX(){
+			return (int)Math.round(this.viewX);
+		}
+		
+		public int getY(){
+			return (int)Math.round(this.viewY);
+		}
+		
+		public int getZ(){
+			return (int)Math.round(this.viewZ);
+		}
+		
+		@Override
+		public String toString(){
+			return "View coords: "+getX()+" "+getY()+" "+getZ();
+		}
+	}
+	
 	public int x, y, z;
 	private int startX, startY, startZ;
 	public Integer relX, relY;
@@ -22,6 +85,7 @@ public class InnerCube {
 	public Point3D xAxis = new Point3D(1, 0, 0);
 	public Point3D yAxis = new Point3D(0, 1, 0);
 	public Point3D zAxis = new Point3D(0, 0, 1);
+	private FaceSystem faceSystem = new FaceSystem();
 	
 	public InnerCube(int x, int y, int z){
 		this.x = x;
@@ -48,6 +112,16 @@ public class InnerCube {
 		return this.startZ;
 	}
 	
+	public FaceSystem getFaceSystem(){
+		return this.faceSystem;
+	}
+	
+	public ViewCoords getViewCoords(Cube cube){
+		ViewCoords vc = new ViewCoords(cube, this.x, this.y, this.z);
+		vc.setup();
+		return vc;
+	}
+	
 	public List<Face.Faces> getVisibleFaces(){
 		List<Face.Faces> visible = new ArrayList<>();
 		for (Face.Faces f : Face.Faces.values()){
@@ -57,6 +131,27 @@ public class InnerCube {
 			visible.remove(f);
 		}
 		return visible;
+	}
+	
+	public List<Color> getVisibleColors(){
+		List<Color> colors = new ArrayList<>();
+		for (Face.Faces f : getVisibleFaces()){
+			colors.add(f.getColor());
+		}
+		return colors;
+	}
+	
+	public boolean hasColor(Color color){
+		return getVisibleColors().contains(color);
+	}
+	
+	public boolean isInCorrectPlace(Cube cube){
+		return getFaceSystem().getTopFace().equals(cube.getFaces().getTopFace()) &&
+				getFaceSystem().getRightFace().equals(cube.getFaces().getRightFace()) &&
+				getFaceSystem().getLeftFace().equals(cube.getFaces().getLeftFace()) &&
+				getFaceSystem().getFrontFace().equals(cube.getFaces().getFrontFace()) &&
+				getFaceSystem().getBackFace().equals(cube.getFaces().getBackFace()) &&
+				getFaceSystem().getBottomFace().equals(cube.getFaces().getBottomFace());
 	}
 	
 	public Group getModel(){
