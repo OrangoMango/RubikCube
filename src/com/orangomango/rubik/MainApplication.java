@@ -7,14 +7,14 @@ import javafx.scene.SubScene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.paint.Color;
-import javafx.scene.layout.TilePane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TextField;
+import javafx.scene.canvas.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextInputDialog;
 import javafx.animation.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import java.util.*;
 import javafx.geometry.Rectangle2D;
@@ -29,12 +29,9 @@ import com.orangomango.rubik.model.Cube;
 import com.orangomango.rubik.model.Move;
 
 public class MainApplication extends Application {
+	private int tabSelected;
+	public static boolean clickAllowed = true;
 	
-	private boolean scr;
-	private List<String> moves = new ArrayList<>();
-	private int counter;
-	private int acounter;
-	private int thisMove;
 	private static final Rectangle2D bounds = new Rectangle2D(0, 0, 420, 840);
 	private static final int CAMERA_X = -110;
 	private static final int CAMERA_Y = -200;
@@ -68,183 +65,160 @@ public class MainApplication extends Application {
 		zAxis.setMaterial(new PhongMaterial(Color.GREEN));
 		zAxis.setTranslateZ(300);
 		
-		TilePane controls = new TilePane();
-		controls.setHgap(5);
-		controls.setVgap(5);
-		Button front = new Button("F");
-		front.setOnAction(e -> Move.applyMove("F", cube));
-		Button frontP = new Button("F'");
-		frontP.setOnAction(e -> Move.applyMove("f", cube));
-		Button back = new Button("B");
-		back.setOnAction(e -> Move.applyMove("B", cube));
-		Button backP = new Button("B'");
-		backP.setOnAction(e -> Move.applyMove("b", cube));
-		Button right = new Button("R");
-		right.setOnAction(e -> Move.applyMove("R", cube));
-		Button rightP = new Button("R'");
-		rightP.setOnAction(e -> Move.applyMove("r", cube));
-		Button left = new Button("L");
-		left.setOnAction(e -> Move.applyMove("L", cube));
-		Button leftP = new Button("L'");
-		leftP.setOnAction(e -> Move.applyMove("l", cube));
-		Button up = new Button("U");
-		up.setOnAction(e -> Move.applyMove("U", cube));
-		Button upP = new Button("U'");
-		upP.setOnAction(e -> Move.applyMove("u", cube));
-		Button down = new Button("D");
-		down.setOnAction(e -> Move.applyMove("D", cube));
-		Button downP = new Button("D'");
-		downP.setOnAction(e -> Move.applyMove("d", cube));
-		
-		Button yP = new Button("Y+");
-		yP.setOnAction(e -> cube.rotateCubeY(1));
-		Button yM = new Button("Y-");
-		yM.setOnAction(e -> cube.rotateCubeY(-1));
-
-		/*
-		Button rxp = new Button("RX +");
-		rxp.setOnAction(e -> cube.getRotateX().setAngle(cube.getRotateX().getAngle()+10));
-		Button rxn = new Button("RX -");
-		rxn.setOnAction(e -> cube.getRotateX().setAngle(cube.getRotateX().getAngle()-10));
-		Button ryp = new Button("RY +");
-		ryp.setOnAction(e -> cube.getRotateY().setAngle(cube.getRotateY().getAngle()+10));
-		Button ryn = new Button("RY -");
-		ryn.setOnAction(e -> cube.getRotateY().setAngle(cube.getRotateY().getAngle()-10));
-		Button rzp = new Button("RZ +");
-		rzp.setOnAction(e -> cube.getRotateZ().setAngle(cube.getRotateZ().getAngle()+10));
-		Button rzn = new Button("RZ -");
-		rzn.setOnAction(e -> cube.getRotateZ().setAngle(cube.getRotateZ().getAngle()-10));
-		*/
-
-		Button reset = new Button("Reset");
-		Button scramble = new Button("Scramble");
-		Button reassemble = new Button("Reassemble");
-		Label currentMove = new Label("Move: 0");
-		reassemble.setOnAction(e -> {
-			if (scr || moves.size() == 0) return;
-			reset.setDisable(true);
-			Move.ANIMATION = false;
-			Cube.MOVE_DURATION = 10;
-			scr = true;
-			Collections.reverse(moves);
-			Timeline reassembling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
-				String mv = moves.get(counter++);
-				Move.applyMove(Move.CAPS.contains(mv) ? mv.toLowerCase() : mv.toUpperCase(), cube);
-				currentMove.setText("Move: "+(Cube.SCRAMBLE_MOVES-counter));
-			}));
-			reassembling.setCycleCount(Cube.SCRAMBLE_MOVES);
-			reassembling.setOnFinished(evt -> {
-				scr = false;
-				counter = 0;
-				moves.clear();
-				reset.setDisable(false);
-				Move.ANIMATION = true;
-				Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
-			});
-			reassembling.play();
-		});
-		
-		TextField input = new TextField();
-		input.setPromptText("RUF3F'U'L2B'2");
-		Button read = new Button("Apply");
-		Button oppo = new Button("Opposite");
-		Button solve = new Button("Solve");		
-		solve.setOnAction(e -> cube.solve());
-		read.setOnAction(e -> {
-			String parsed = Move.parseNotation(input.getText());
-			if (parsed == null){
-				System.out.println("Error in your syntax");
-				return;
-			}
-			read.setDisable(true);
-			reset.setDisable(true);
-			oppo.setDisable(true);
-			char[] m = parsed.toCharArray();
-			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> Move.applyMove(Character.toString(m[acounter++]), cube)));
-			moving.setCycleCount(m.length);
-			moving.setOnFinished(evt -> {
-				acounter = 0;
-				read.setDisable(false);
-				reset.setDisable(false);
-				oppo.setDisable(false);
-			});
-			moving.play();
-		});
-		oppo.setOnAction(e -> {
-			String parsed = Move.parseNotation(input.getText());
-			if (parsed == null){
-				System.out.println("Error in your syntax");
-				return;
-			}
-			read.setDisable(true);
-			reset.setDisable(true);
-			oppo.setDisable(true);
-			char[] m = parsed.toCharArray();
-			Timeline moving = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
-				String str = Character.toString(m[m.length-1-(acounter++)]);
-				Move.applyMove(Move.CAPS.contains(str) ? str.toLowerCase() : str.toUpperCase(), cube);
-			}));
-			moving.setCycleCount(m.length);
-			moving.setOnFinished(evt -> {
-				acounter = 0;
-				read.setDisable(false);
-				reset.setDisable(false);
-				oppo.setDisable(false);
-			});
-			moving.play();
-		});
-
-		Random random = new Random();
-		scramble.setOnAction(e -> {
-			if (scr || moves.size() != 0) return;
-			reset.setDisable(true);
-			read.setDisable(true);
-			oppo.setDisable(true);
-			Move.ANIMATION = false;
-			Cube.MOVE_DURATION = 10;
-			scr = true;
-			Timeline scrambling = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), evt -> {
-				String mv = Move.moves[random.nextInt(Move.moves.length)];
-				moves.add(mv);
-				Move.applyMove(mv, cube);
-				currentMove.setText("Move: "+(thisMove++));
-			}));
-			scrambling.setCycleCount(Cube.SCRAMBLE_MOVES);
-			scrambling.setOnFinished(evt -> {
-				scr = false;
-				thisMove = 0;
-				reset.setDisable(false);
-				read.setDisable(false);
-				oppo.setDisable(false);
-				Move.ANIMATION = true;
-				Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
-			});
-			scrambling.play();
-		});
-
-		controls.getChildren().addAll(front, frontP, back, backP, right, rightP, left, leftP, up, upP, down, downP, yP, yM, new Separator(), reset, scramble, reassemble, currentMove);
+		StackPane controls = new StackPane();
+		StackPane stackPane = new StackPane();
 		
 		SubScene scene = new SubScene(new Group(cube.getModel()), bounds.getWidth()-10, bounds.getHeight()*0.65, true, SceneAntialiasing.BALANCED);
-		reset.setOnAction(e -> {
-			moves.clear();
-			cube.generateCube();
-			scene.setRoot(new Group(cube.getModel()));
-			currentMove.setText("Move: 0");
-			cube.getRotateX().setAngle(45);
-			cube.getRotateY().setAngle(-45);
-			cube.getRotateZ().setAngle(0);
-			camera.getTransforms().clear();
-		});
 		scene.setFocusTraversable(true);
 		scene.setFill(Color.CYAN);
 		scene.setCamera(camera);
 		
-		scene.setOnMousePressed(event -> {
+		Canvas onScene = new Canvas(scene.getWidth(), scene.getHeight());
+		onScene.setFocusTraversable(true);
+		GraphicsContext layer = onScene.getGraphicsContext2D();
+		stackPane.getChildren().addAll(scene, onScene);
+		
+		Canvas canvas = new Canvas(scene.getWidth(), bounds.getHeight()*0.30);
+		canvas.setOnMousePressed(e -> {
+			if (!clickAllowed) return;
+			if ((new Rectangle2D(0, 0, canvas.getWidth()/2, 35)).contains(e.getX(), e.getY())){
+				tabSelected = 0;
+			} else if ((new Rectangle2D(canvas.getWidth()/2, 0, canvas.getWidth()/2, 35)).contains(e.getX(), e.getY())){
+				tabSelected = 1;
+			}
+			if (tabSelected == 0){
+				int selectedX = -1;
+				int selectedY = -1;
+				for (int i = 0; i < 7; i++){
+					for (int j = 0; j < 3; j++){
+						if ((new Rectangle2D((canvas.getWidth()-(7*40+6*15))/2+i*(40+15), 50+j*(40+15), 40, 40)).contains(e.getX(), e.getY())){
+							selectedX = i;
+							selectedY = j;
+							break;
+						}
+					}
+				}
+				if (selectedX != -1 && selectedY != -1){
+					if (selectedY == 0){
+						if (selectedX == 0) Move.applyMove("F", cube);
+						else if (selectedX == 1) Move.applyMove("f", cube);
+						else if (selectedX == 2) Move.applyMove("B", cube);
+						else if (selectedX == 3) Move.applyMove("b", cube);
+						else if (selectedX == 4) Move.applyMove("R", cube);
+						else if (selectedX == 5) Move.applyMove("r", cube);
+						else if (selectedX == 6) Move.applyMove("L", cube);
+					} else if (selectedY == 1){
+						if (selectedX == 0) Move.applyMove("l", cube);
+						else if (selectedX == 1) Move.applyMove("U", cube);
+						else if (selectedX == 2) Move.applyMove("u", cube);
+						else if (selectedX == 3) Move.applyMove("D", cube);
+						else if (selectedX == 4) Move.applyMove("d", cube);
+						else if (selectedX == 5) Move.applyMove("M", cube);
+						else if (selectedX == 6) Move.applyMove("m", cube);
+					} else if (selectedY == 2){
+						if (selectedX == 0) Move.applyMove("E", cube);
+						else if (selectedX == 1) Move.applyMove("e", cube);
+						else if (selectedX == 2) Move.applyMove("S", cube);
+						else if (selectedX == 3) Move.applyMove("s", cube);
+						else if (selectedX == 4) cube.rotateCubeY(1);
+						else if (selectedX == 5) cube.rotateCubeY(-1);
+						else if (selectedX == 6){
+							cube.generateCube();
+							scene.setRoot(new Group(cube.getModel()));
+							cube.getRotateX().setAngle(45);
+							cube.getRotateY().setAngle(-45);
+							cube.getRotateZ().setAngle(0);
+							camera.getTransforms().clear();
+						}
+					}
+				}
+			} else if (tabSelected == 1){
+				if ((new Rectangle2D(30, 60, 120, 40)).contains(e.getX(), e.getY())){
+					Random random = new Random();
+					new Thread(() -> {
+						clickAllowed = false;
+						for (int i = 0; i < Cube.SCRAMBLE_MOVES; i++){
+							Move.applyMove(Move.moves[random.nextInt(Move.moves.length)], cube);
+							while (Move.animating){
+								try {
+									Thread.sleep(100);		
+								} catch (InterruptedException ex){
+									ex.printStackTrace();
+								}
+							}
+						}
+						clickAllowed = true;
+					}).start();
+				} else if ((new Rectangle2D(30, 120, 120, 40)).contains(e.getX(), e.getY())){
+					cube.solve();
+				} else if ((new Rectangle2D(30, 180, 120, 40)).contains(e.getX(), e.getY())){
+					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+					alert.setTitle("Algorithm");
+					alert.setHeaderText("Solving algorithm");
+					alert.setContentText(cube.solvingAlgorithm == null ? "Please solve the cube before" : cube.solvingAlgorithm);
+					alert.showAndWait();
+				} else if ((new Rectangle2D(170, 60, 120, 40)).contains(e.getX(), e.getY())){
+					TextInputDialog dialog = new TextInputDialog();
+					dialog.setTitle("Enter algorithm");
+					dialog.setHeaderText("Enter algorithm");
+					dialog.showAndWait();
+					
+					new Thread(() -> {
+						String moves = Move.parseNotation(dialog.getEditor().getText());
+						if (moves == null) return;
+						clickAllowed = false;
+						for (char c : moves.toCharArray()){
+							Move.applyMove(Character.toString(c), cube);
+							while (Move.animating){
+								try {
+									Thread.sleep(100);		
+								} catch (InterruptedException ex){
+									ex.printStackTrace();
+								}
+							}
+						}
+						clickAllowed = true;
+					}).start();
+				}
+				int selected = -1;
+				for (int i = 0; i < 4; i++){
+					if ((new Rectangle2D(canvas.getWidth()-65, 50+i*(35+15), 35, 35)).contains(e.getX(), e.getY())){
+						selected = i;
+						break;
+					}
+				}
+				if (selected != -1){
+					switch (selected){
+						case 0:
+							Cube.DEFAULT_DURATION = 600;
+							break;
+						case 1:
+							Cube.DEFAULT_DURATION = 300;
+							break;
+						case 2:
+							Cube.DEFAULT_DURATION = 180;
+							break;
+						case 3:
+							Cube.DEFAULT_DURATION = 80;
+							break;
+					}
+					Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
+				}
+			}
+		});
+		controls.getChildren().add(canvas);
+		GraphicsContext gc = canvas.getGraphicsContext2D();
+		
+		Timeline loop = new Timeline(new KeyFrame(Duration.millis(1000.0/40), e -> update(gc, layer)));
+		loop.setCycleCount(Animation.INDEFINITE);
+		loop.play();
+		
+		onScene.setOnMousePressed(event -> {
             mouseOldX = event.getSceneX();
             mouseOldY = event.getSceneY();
         });
 
-        scene.setOnMouseDragged(event -> {
+        onScene.setOnMouseDragged(event -> {
 			double rotX = event.getSceneY() - mouseOldY;
 			double rotY = event.getSceneX() - mouseOldX;
             this.rx -= rotX;
@@ -254,14 +228,80 @@ public class MainApplication extends Application {
             mouseOldY = event.getSceneY();
         });
         
-        //System.out.println(Move.getRotationDirection(Move.getRotationDirection(Move.getRotationDirection("U", 1, Rotate.X_AXIS), 1, Rotate.Y_AXIS), 0, Rotate.Z_AXIS));
-		
-		VBox layout = new VBox(scene, controls, new HBox(10, input, read, oppo, solve));
-		layout.setSpacing(15);
+		VBox layout = new VBox(stackPane, controls);
+		layout.setSpacing(10);
 		layout.setPadding(new Insets(5, 5, 5, 5));
 		
 		stage.setScene(new Scene(layout, bounds.getWidth(), bounds.getHeight()));
 		stage.setTitle("Rubik's cube");
 		stage.show();
+	}
+	
+	private void update(GraphicsContext gc, GraphicsContext layer){
+		layer.clearRect(0, 0, layer.getCanvas().getWidth(), layer.getCanvas().getHeight());
+		layer.setFill(Color.BLACK);
+		layer.fillText(String.format("Current move: %s\nMove duration: %d", Move.printAlgorithm(Move.currentMove), Cube.DEFAULT_DURATION), 20, 20);
+		
+		double width = gc.getCanvas().getWidth();
+		double height = gc.getCanvas().getHeight();
+		
+		gc.clearRect(0, 0, width, height);
+		gc.setFill(Color.web("#36B367"));
+		gc.fillRect(0, 0, width, height);
+		gc.setFill(tabSelected == 0 ? Color.web("#10F267") : Color.web("#4A6956"));
+		gc.fillRect(0, 0, width/2, 35);
+		gc.setFill(tabSelected == 1 ? Color.web("#10F267") : Color.web("#4A6956"));
+		gc.fillRect(width/2, 0, width/2, 35);
+		gc.setFont(new Font("sans-serif", 25));
+		gc.setTextAlign(TextAlignment.CENTER);
+		
+		String[][] texts = new String[][]{{"F", "F'", "B", "B'", "R", "R'", "L"}, 
+											{"L'", "U", "U'", "D", "D'", "M", "M'"}, 
+											{"E", "E'", "S", "S'", "Y", "Y'", "Rs"}};
+		String[] speeds = new String[]{"<<", "<", ">", ">>"};
+		
+		if (tabSelected == 0){
+			for (int i = 0; i < 7; i++){
+				for (int j = 0; j < 3; j++){
+					gc.setFill(Color.web("#1E6D3D"));
+					double x = (width-(7*40+6*15))/2+i*(40+15);
+					double y = 50+j*(40+15);
+					gc.fillRect(x, y, 40, 40);
+					gc.setFill(Color.RED);
+					gc.fillText(texts[j][i], x+40/2, y+40/2+8);
+				}
+			}
+		} else if (tabSelected == 1){
+			gc.setTextAlign(TextAlignment.LEFT);
+			gc.setFill(Color.web("#1E6D3D"));
+			gc.fillRect(30, 60, 120, 40);
+			gc.fillRect(30, 120, 120, 40);
+			gc.fillRect(30, 180, 120, 40);
+			gc.fillRect(170, 60, 120, 40);
+			gc.setFont(new Font("sans-serif", 20));
+			gc.setFill(Color.RED);
+			gc.fillText("Scramble", 35, 85);
+			gc.fillText("Solve", 35, 145);
+			gc.fillText("Solving Alg.", 35, 205);
+			gc.fillText("Input", 175, 85);
+			gc.setTextAlign(TextAlignment.CENTER);
+			
+			for (int i = 0; i < 4; i++){
+				double x = width-65;
+				double y = 50+i*(35+15);
+				gc.setFill(Color.web("#1E6D3D"));
+				gc.fillRect(x, y, 35, 35);
+				gc.setFill(Color.RED);
+				gc.fillText(speeds[i], x+35/2, y+35/2+5);
+			}
+		}
+		
+		if (!clickAllowed){
+			gc.save();
+			gc.setGlobalAlpha(0.6);
+			gc.setFill(Color.BLACK);
+			gc.fillRect(0, 0, width, height);
+			gc.restore();
+		}
 	}
 }

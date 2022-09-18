@@ -167,13 +167,13 @@ public class InnerCube {
 					}
 					break;
 				case BOTTOM:
-					if (this.y != 2){
+					if (this.y != Cube.SIZE-1){
 						color = color.BLACK;
 						invisibleFaces.add(Face.Faces.BOTTOM);
 					}
 					break;
 				case RIGHT:
-					if (this.x != 2){
+					if (this.x != Cube.SIZE-1){
 						color = color.BLACK;
 						invisibleFaces.add(Face.Faces.RIGHT);
 					}
@@ -191,7 +191,7 @@ public class InnerCube {
 					}
 					break;
 				case BACK:
-					if (this.z != 2){
+					if (this.z != Cube.SIZE-1){
 						color = color.BLACK;
 						invisibleFaces.add(Face.Faces.BACK);
 					}

@@ -6,10 +6,36 @@ import javafx.geometry.Point3D;
 import java.util.*;
 
 public class Move {
-	public static boolean animating = false;
+	public static volatile boolean animating = false;
 	public static String[] moves = new String[]{"F", "f", "R", "r", "U", "u", "L", "l", "B", "b", "D", "d"};
 	public static final String CAPS = "FRULBDMESY";
 	public static boolean ANIMATION = true;
+	public static String currentMove;
+	
+	public static String printAlgorithm(String input){
+		if (input == null) return null;
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < input.length(); i++){
+			char c = input.charAt(i);
+			if (Character.isLowerCase(c)){
+				builder.append(Character.toUpperCase(c)+"'");
+			} else {
+				builder.append(Character.toString(c));
+			}
+			if (i != input.length()-1){
+				char next = input.charAt(i+1);
+				if (next == c){
+					builder.append("2 ");
+					i++;
+				} else {
+					builder.append(" ");
+				}
+			} else {
+				builder.append(" ");
+			}
+		}
+		return builder.toString();
+	}
 	
 	public static String parseNotation(String input){
 		input = input.toUpperCase();
@@ -56,6 +82,7 @@ public class Move {
 	}
 	
 	public static void applyMove(String move, Cube cube){
+		currentMove = move;
 		move = getRotationDirection(move, cube.psY, Rotate.Y_AXIS);
 
 		switch (move){

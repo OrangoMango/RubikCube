@@ -6,10 +6,10 @@ import javafx.util.Duration;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.orangomango.rubik.MainApplication;
 
 public class CubeSolver{
 	private Cube cube;
-	private int selected = 0;
 
 	private static final String T_RIGHT = "drdRDFDf";
 	private static final String T_LEFT = "DLDldfdF";
@@ -24,7 +24,7 @@ public class CubeSolver{
 		this.cube = cube;
 	}
 	
-	public void solve(){
+	public String solve(){
 		Move.ANIMATION = false;
 		List<String> solution = new ArrayList<>();
 		
@@ -81,7 +81,7 @@ public class CubeSolver{
 		
 		//System.out.println(solution);
 		
-		if (solution.size() == 0) return;
+		if (solution.size() == 0) return null;
 		
 		// ------------ Reset -----------------
 		StringBuilder builder = new StringBuilder();
@@ -93,20 +93,30 @@ public class CubeSolver{
 		String sol = clean(builder.toString());
 		String opposite = reverse(sol);
 		
-		//System.out.println(sol+" "+clean(sol));
-		
 		makeMove(opposite, new ArrayList<String>());
 		Move.ANIMATION = true;
 		
 		//Cube.MOVE_DURATION = 2000; // Temp
 		
-		if (sol.length() == 0) return;
-		Timeline time = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION*1.5), e -> {
-			char c = sol.charAt(selected++);
-			makeMove(Character.toString(c), new ArrayList<String>());
-		}));
-		time.setCycleCount(sol.length());
-		time.play();
+		if (sol.length() == 0) return null;
+		
+		MainApplication.clickAllowed = false;
+		new Thread(() -> {
+			for (int i = 0; i < sol.length(); i++){
+				char c = sol.charAt(i);
+				makeMove(Character.toString(c), new ArrayList<String>());
+				while (Move.animating){
+					try {
+						Thread.sleep(100);		
+					} catch (InterruptedException ex){
+						ex.printStackTrace();
+					}
+				}
+			}
+			MainApplication.clickAllowed = true;
+		}).start();
+		
+		return sol;
 	}
 	
 	private String clean(String sol){
@@ -115,7 +125,11 @@ public class CubeSolver{
 			char c = sol.charAt(i);
 			if (i < sol.length()-1){
 				char next = sol.charAt(i+1);
-				if (((Character.isUpperCase(c) && Character.isLowerCase(next)) || (Character.isUpperCase(next) && Character.isLowerCase(c))) && Character.toUpperCase(c) == Character.toUpperCase(next)){
+				if (c == next && Character.isLowerCase(c)){
+					builder.append(Character.toUpperCase(c)+""+Character.toUpperCase(c));
+					i++;
+					continue;
+				} else if (((Character.isUpperCase(c) && Character.isLowerCase(next)) || (Character.isUpperCase(next) && Character.isLowerCase(c))) && Character.toUpperCase(c) == Character.toUpperCase(next)){
 					i++;
 					continue;
 				}
@@ -191,7 +205,9 @@ public class CubeSolver{
 			turnCubeY(solution, -1);
 			makeMove(TRIANGLE_RIGHT, solution);
 		} else {
+			makeMove(TRIANGLE_RIGHT, solution);
 			turnCubeY(solution, 1);
+			makeMove(TRIANGLE_LEFT, solution);
 			makeTriangle(solution);
 		}
 	}

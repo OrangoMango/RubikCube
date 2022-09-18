@@ -21,10 +21,11 @@ public class Cube{
 	private Point3D yAxis = Rotate.Y_AXIS;
 	private Point3D zAxis = Rotate.Z_AXIS;
 	private Group model;
+	public String solvingAlgorithm;
 	
 	public static final int INNER_CUBE_WIDTH = 100;
 	public static final int SIZE = 3;
-	public static final int DEFAULT_DURATION = 150;
+	public static int DEFAULT_DURATION = 180;
 	public static int MOVE_DURATION = DEFAULT_DURATION;
 	public static final int SCRAMBLE_MOVES = 70;
 	
@@ -38,6 +39,7 @@ public class Cube{
 	
 	public void generateCube(){
 		psY = 0;
+		solvingAlgorithm = null;
 		this.model = null;
 		this.xAxis = Rotate.X_AXIS;
 		this.yAxis = Rotate.Y_AXIS;
@@ -83,7 +85,7 @@ public class Cube{
 	
 	public void solve(){
 		CubeSolver solver = new CubeSolver(this);
-		solver.solve();
+		this.solvingAlgorithm = Move.printAlgorithm(solver.solve());
 	}
 	
 	public void rotateCubeY(int direction){
@@ -95,8 +97,10 @@ public class Cube{
 		this.zAxis = zA;
 		this.faceSystem.rotate(-direction, Rotate.Y_AXIS);
 		if (Move.ANIMATION){
+			Move.animating = true;
 			Timeline loop = new Timeline(new KeyFrame(Duration.millis(Cube.MOVE_DURATION/9), e -> getModel().getTransforms().add(new Rotate(10*direction, 100, 100, 100, this.yAxis))));
 			loop.setCycleCount(9);
+			loop.setOnFinished(e -> Move.animating = false);
 			loop.play();
 		}
 		//System.out.println("--- "+this.faceSystem);
@@ -131,6 +135,7 @@ public class Cube{
 				}
 			}
 		}
+		
 		Move.animating = false;
 	}
 	
