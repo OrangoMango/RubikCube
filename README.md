@@ -1,5 +1,9 @@
 # RubikCube
 Rubik's cube made with javafx3D
+# Features
+* Custom moves
+* Custom running algorithms
+* **Solving algorithm using layers method**
 # How to run
 * Download the JavaFX-SDK
 * Run the file named `run.sh` with the command:
