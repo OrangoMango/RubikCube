@@ -9,4 +9,4 @@ Rubik's cube made with javafx3D
 # Android
 Install [this apk](https://github.com/OrangoMango/RubikCube/raw/main/rubikcube.apk) on your android device
 # Screenshot
-<img src="https://user-images.githubusercontent.com/61402409/174483134-4b68ea9f-67f0-45b9-b375-a0d82c343b51.png" width=300 />
+<img src="https://user-images.githubusercontent.com/61402409/190895360-59b3c034-950f-4c94-be1a-8c1e5c952495.png" width=300 />
