@@ -6,6 +6,20 @@ import javafx.geometry.Point3D;
 import java.util.*;
 
 public class Move {
+	public static class Wrapper{
+		private int axis, pos, dir;
+		
+		public Wrapper(int a, int p, int d){
+			this.axis = a;
+			this.pos = p;
+			this.dir = d;
+		}
+		
+		public Wrapper opposite(){
+			return new Wrapper(this.axis, this.pos, -this.dir);
+		}
+	}
+	
 	public static volatile boolean animating = false;
 	public static String[] moves = new String[]{"F", "f", "R", "r", "U", "u", "L", "l", "B", "b", "D", "d"};
 	public static final String CAPS = "FRULBDMESY";
@@ -79,6 +93,28 @@ public class Move {
 			}
 		}
 		return output.toString();
+	}
+	
+	public static void genericMove(Wrapper wrapper, Cube cube){
+		if (animating) return;
+		animating = true;
+		switch (wrapper.axis){
+			case 0:
+				cube.rotateX(wrapper.pos, wrapper.dir, ANIMATION);
+				break;
+			case 1:
+				cube.rotateY(wrapper.pos, wrapper.dir, ANIMATION);
+				break;
+			case 2:
+				cube.rotateZ(wrapper.pos, wrapper.dir, ANIMATION);
+				break;
+		}
+	}
+	
+	public static Wrapper randomMove(Random random, Cube cube){
+		Wrapper w = new Wrapper(random.nextInt(3), random.nextInt(Cube.SIZE), random.nextInt(2) == 0 ? 1 : -1);
+		genericMove(w, cube);
+		return w;
 	}
 	
 	public static void applyMove(String move, Cube cube){
@@ -232,7 +268,7 @@ public class Move {
 	public static void RIGHT_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateX(2, 1, ANIMATION);
+		cube.rotateX(Cube.SIZE-1, 1, ANIMATION);
 	}
 	
 	public static void UP_CLOCKWISE(Cube cube){
@@ -250,31 +286,31 @@ public class Move {
 	public static void BACK_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateZ(2, -1, ANIMATION);
+		cube.rotateZ(Cube.SIZE-1, -1, ANIMATION);
 	}
 	
 	public static void DOWN_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateY(2, 1, ANIMATION);
+		cube.rotateY(Cube.SIZE-1, 1, ANIMATION);
 	}
 	
 	public static void MIDDLE_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateX(1, -1, ANIMATION);
+		cube.rotateX(Cube.SIZE/2, -1, ANIMATION);
 	}
 	
 	public static void EQUATOR_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateY(1, 1, ANIMATION);
+		cube.rotateY(Cube.SIZE/2, 1, ANIMATION);
 	}
 	
 	public static void STANDING_CLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateZ(1, 1, ANIMATION);
+		cube.rotateZ(Cube.SIZE/2, 1, ANIMATION);
 	}
 	
 	public static void FRONT_COUNTERCLOCKWISE(Cube cube){
@@ -286,7 +322,7 @@ public class Move {
 	public static void RIGHT_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateX(2, -1, ANIMATION);
+		cube.rotateX(Cube.SIZE-1, -1, ANIMATION);
 	}
 	
 	public static void UP_COUNTERCLOCKWISE(Cube cube){
@@ -304,30 +340,30 @@ public class Move {
 	public static void BACK_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateZ(2, 1, ANIMATION);
+		cube.rotateZ(Cube.SIZE-1, 1, ANIMATION);
 	}
 	
 	public static void DOWN_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateY(2, -1, ANIMATION);
+		cube.rotateY(Cube.SIZE-1, -1, ANIMATION);
 	}
 	
 	public static void MIDDLE_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateX(1, 1, ANIMATION);
+		cube.rotateX(Cube.SIZE/2, 1, ANIMATION);
 	}
 	
 	public static void EQUATOR_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateY(1, -1, ANIMATION);
+		cube.rotateY(Cube.SIZE/2, -1, ANIMATION);
 	}
 	
 	public static void STANDING_COUNTERCLOCKWISE(Cube cube){
 		if (animating) return;
 		animating = true;
-		cube.rotateZ(1, -1, ANIMATION);
+		cube.rotateZ(Cube.SIZE/2, -1, ANIMATION);
 	}
 }

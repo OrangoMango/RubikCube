@@ -77,7 +77,7 @@ public class InnerCube {
 	
 	public int x, y, z;
 	private int startX, startY, startZ;
-	public Integer relX, relY;
+	public Double relX, relY;
 	private Face[] faces = new Face[6];
 	private List<Face.Faces> invisibleFaces = new ArrayList<>();
 	private Group model;

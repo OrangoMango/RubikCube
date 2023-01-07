@@ -12,9 +12,9 @@ import java.util.*;
 
 public class Cube{	
 	private InnerCube[][][] cube = new InnerCube[SIZE][SIZE][SIZE];
-	private Rotate rotateX = new Rotate(45, 100, 100, 100, Rotate.X_AXIS);
-	private Rotate rotateY = new Rotate(-45, 100, 100, 100, Rotate.Y_AXIS);
-	private Rotate rotateZ = new Rotate(0, 100, 100, 100, Rotate.Z_AXIS);
+	private Rotate rotateX = new Rotate(45, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, Rotate.X_AXIS); // 45
+	private Rotate rotateY = new Rotate(-45, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, Rotate.Y_AXIS); // -45
+	private Rotate rotateZ = new Rotate(0, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, (SIZE/2.0+0.5-1)*100, Rotate.Z_AXIS);
 	private FaceSystem faceSystem = new FaceSystem();
 	public int psY;
 	private Point3D xAxis = Rotate.X_AXIS;
@@ -23,8 +23,8 @@ public class Cube{
 	private Group model;
 	public String solvingAlgorithm;
 	
+	public static int SIZE = 4;
 	public static final int INNER_CUBE_WIDTH = 100;
-	public static final int SIZE = 3;
 	public static int DEFAULT_DURATION = 180;
 	public static int MOVE_DURATION = DEFAULT_DURATION;
 	public static final int SCRAMBLE_MOVES = 70;
@@ -170,10 +170,11 @@ public class Cube{
 		}
 		
 		// Setup relX and relY
+		final double offset = (SIZE/2.0+0.5)-1;
 		for (int y = 0; y < SIZE; y++){
 			for (int x = 0; x < SIZE; x++){
-				slice[y][x].relX = x-1;
-				slice[y][x].relY = y-1;
+				slice[y][x].relX = x-offset;
+				slice[y][x].relY = y-offset;
 			}
 		}
 		
@@ -181,14 +182,14 @@ public class Cube{
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
-					int oldX = slice[y][x].relX;
-					int oldY = slice[y][x].relY;
-					int newX = (int)Math.round(oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction));
-					int newY = (int)Math.round(oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction));
+					double oldX = slice[y][x].relX;
+					double oldY = slice[y][x].relY;
+					double newX = oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction);
+					double newY = oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction);
 					slice[y][x].relX = newX;
 					slice[y][x].relY = newY;
-					slice[y][x].y = newY+1;
-					slice[y][x].z = newX+1;
+					slice[y][x].y = (int)Math.round(newY+offset);
+					slice[y][x].z = (int)Math.round(newX+offset);
 					slice[y][x].getFaceSystem().rotate(direction, this.xAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(-90*direction, slice[y][x].xAxis)));
 					Point3D yA = slice[y][x].zAxis.multiply(direction);
@@ -206,7 +207,7 @@ public class Cube{
 			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
 				for (int y = 0; y < SIZE; y++){
 					for (int x = 0; x < SIZE; x++){
-						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].xAxis));
+						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, offset*100-slice[y][x].getStartX(), offset*100-slice[y][x].getStartY(), offset*100-slice[y][x].getStartZ(), slice[y][x].xAxis));
 					}
 				}
 			}));
@@ -241,10 +242,11 @@ public class Cube{
 		}
 		
 		// Setup relX and relY
+		final double offset = (SIZE/2.0+0.5)-1;
 		for (int y = 0; y < SIZE; y++){
 			for (int x = 0; x < SIZE; x++){
-				slice[y][x].relX = x-1;
-				slice[y][x].relY = y-1;
+				slice[y][x].relX = x-offset;
+				slice[y][x].relY = y-offset;
 			}
 		}
 		
@@ -252,14 +254,14 @@ public class Cube{
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
-					int oldX = slice[y][x].relX;
-					int oldY = slice[y][x].relY;
-					int newX = (int)Math.round(oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction));
-					int newY = (int)Math.round(oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction));
+					double oldX = slice[y][x].relX;
+					double oldY = slice[y][x].relY;
+					double newX = oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction);
+					double newY = oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction);
 					slice[y][x].relX = newX;
 					slice[y][x].relY = newY;
-					slice[y][x].x = newX+1;
-					slice[y][x].z = newY+1;
+					slice[y][x].x = (int)Math.round(newX+offset);
+					slice[y][x].z = (int)Math.round(newY+offset);
 					slice[y][x].getFaceSystem().rotate(direction, this.yAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(-90*direction, slice[y][x].yAxis)));
 					Point3D xA = slice[y][x].zAxis.multiply(-1).multiply(direction);
@@ -277,7 +279,7 @@ public class Cube{
 			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
 				for (int y = 0; y < SIZE; y++){
 					for (int x = 0; x < SIZE; x++){
-						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].yAxis));
+						slice[y][x].getModel().getTransforms().add(new Rotate(-10*direction, offset*100-slice[y][x].getStartX(), offset*100-slice[y][x].getStartY(), offset*100-slice[y][x].getStartZ(), slice[y][x].yAxis));
 					}
 				}
 			}));
@@ -313,10 +315,11 @@ public class Cube{
 		}
 		
 		// Setup relX and relY
+		final double offset = (SIZE/2.0+0.5)-1;
 		for (int y = 0; y < SIZE; y++){
 			for (int x = 0; x < SIZE; x++){
-				slice[y][x].relX = x-1;
-				slice[y][x].relY = y-1;
+				slice[y][x].relX = x-offset;
+				slice[y][x].relY = y-offset;
 			}
 		}
 		
@@ -324,14 +327,14 @@ public class Cube{
 			// Rotate the slice
 			for (int y = 0; y < SIZE; y++){
 				for (int x = 0; x < SIZE; x++){
-					int oldX = slice[y][x].relX;
-					int oldY = slice[y][x].relY;
-					int newX = (int)Math.round(oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction));
-					int newY = (int)Math.round(oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction));
+					double oldX = slice[y][x].relX;
+					double oldY = slice[y][x].relY;
+					double newX = oldX*Math.cos(Math.PI/2*direction)-oldY*Math.sin(Math.PI/2*direction);
+					double newY = oldX*Math.sin(Math.PI/2*direction)+oldY*Math.cos(Math.PI/2*direction);
 					slice[y][x].relX = newX;
 					slice[y][x].relY = newY;
-					slice[y][x].y = newY+1;
-					slice[y][x].x = newX+1;
+					slice[y][x].y = (int)Math.round(newY+offset);
+					slice[y][x].x = (int)Math.round(newX+offset);
 					slice[y][x].getFaceSystem().rotate(direction, this.zAxis);
 					slice[y][x].getModel().getTransforms().set(0, slice[y][x].getModel().getTransforms().get(0).createConcatenation(new Rotate(90*direction, slice[y][x].zAxis)));
 					Point3D xA = slice[y][x].yAxis.multiply(-1).multiply(direction);
@@ -349,7 +352,7 @@ public class Cube{
 			Timeline movement = new Timeline(new KeyFrame(Duration.millis(MOVE_DURATION/9), e -> {
 				for (int y = 0; y < SIZE; y++){
 					for (int x = 0; x < SIZE; x++){
-						slice[y][x].getModel().getTransforms().add(new Rotate(10*direction, 100-slice[y][x].getStartX(), 100-slice[y][x].getStartY(), 100-slice[y][x].getStartZ(), slice[y][x].zAxis));
+						slice[y][x].getModel().getTransforms().add(new Rotate(10*direction, offset*100-slice[y][x].getStartX(), offset*100-slice[y][x].getStartY(), offset*100-slice[y][x].getStartZ(), slice[y][x].zAxis));
 					}
 				}
 			}));

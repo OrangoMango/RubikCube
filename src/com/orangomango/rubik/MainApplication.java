@@ -31,11 +31,13 @@ import com.orangomango.rubik.model.Move;
 public class MainApplication extends Application {
 	private int tabSelected;
 	public static boolean clickAllowed = true;
+	private List<Move.Wrapper> moves = new ArrayList<>();
+	private Cube cube;
 	
 	private static final Rectangle2D bounds = new Rectangle2D(0, 0, 420, 840);
-	private static final int CAMERA_X = -110;
-	private static final int CAMERA_Y = -200;
-	private static final int CAMERA_Z = -350;
+	private static double CAMERA_X = -110;
+	private static final double CAMERA_Y = -200;
+	private static double CAMERA_Z = -350;
 	
 	// Camera rotation
 	private double mouseOldX, mouseOldY;
@@ -47,7 +49,7 @@ public class MainApplication extends Application {
 	
 	@Override
 	public void start(Stage stage){
-		Cube cube = new Cube();
+		cube = new Cube();
 		
 		PerspectiveCamera camera = new PerspectiveCamera(false);
 		camera.setTranslateX(CAMERA_X);
@@ -81,10 +83,12 @@ public class MainApplication extends Application {
 		Canvas canvas = new Canvas(scene.getWidth(), bounds.getHeight()*0.30);
 		canvas.setOnMousePressed(e -> {
 			if (!clickAllowed) return;
-			if ((new Rectangle2D(0, 0, canvas.getWidth()/2, 35)).contains(e.getX(), e.getY())){
+			if ((new Rectangle2D(0, 0, canvas.getWidth()/3, 35)).contains(e.getX(), e.getY())){
 				tabSelected = 0;
-			} else if ((new Rectangle2D(canvas.getWidth()/2, 0, canvas.getWidth()/2, 35)).contains(e.getX(), e.getY())){
+			} else if ((new Rectangle2D(canvas.getWidth()/3, 0, canvas.getWidth()/3, 35)).contains(e.getX(), e.getY())){
 				tabSelected = 1;
+			} else if ((new Rectangle2D(2*canvas.getWidth()/3, 0, canvas.getWidth()/3, 35)).contains(e.getX(), e.getY())){
+				tabSelected = 2;
 			}
 			if (tabSelected == 0){
 				int selectedX = -1;
@@ -134,11 +138,12 @@ public class MainApplication extends Application {
 				}
 			} else if (tabSelected == 1){
 				if ((new Rectangle2D(30, 60, 120, 40)).contains(e.getX(), e.getY())){
+					moves.clear();
 					Random random = new Random();
 					new Thread(() -> {
 						clickAllowed = false;
 						for (int i = 0; i < Cube.SCRAMBLE_MOVES; i++){
-							Move.applyMove(Move.moves[random.nextInt(Move.moves.length)], cube);
+							moves.add(Move.randomMove(random, cube));
 							while (Move.animating){
 								try {
 									Thread.sleep(100);		
@@ -150,7 +155,15 @@ public class MainApplication extends Application {
 						clickAllowed = true;
 					}).start();
 				} else if ((new Rectangle2D(30, 120, 120, 40)).contains(e.getX(), e.getY())){
-					cube.solve();
+					if (Cube.SIZE == 3){
+						cube.solve();
+					} else {
+						Alert alert = new Alert(Alert.AlertType.INFORMATION);
+						alert.setTitle("Algorithm");
+						alert.setHeaderText("Solving algorithm");
+						alert.setContentText("Right now, the algorithm works only for a 3x3x3 cube.");
+						alert.showAndWait();
+					}
 				} else if ((new Rectangle2D(30, 180, 120, 40)).contains(e.getX(), e.getY())){
 					Alert alert = new Alert(Alert.AlertType.INFORMATION);
 					alert.setTitle("Algorithm");
@@ -158,13 +171,9 @@ public class MainApplication extends Application {
 					alert.setContentText(cube.solvingAlgorithm == null ? "Please solve the cube before" : cube.solvingAlgorithm);
 					alert.showAndWait();
 				} else if ((new Rectangle2D(170, 60, 120, 40)).contains(e.getX(), e.getY())){
-					TextInputDialog dialog = new TextInputDialog();
-					dialog.setTitle("Enter algorithm");
-					dialog.setHeaderText("Enter algorithm");
-					dialog.showAndWait();
-					
+					String text = askInput("Enter algorithm", "Enter algorithm");
 					new Thread(() -> {
-						String moves = Move.parseNotation(dialog.getEditor().getText());
+						String moves = Move.parseNotation(text);
 						if (moves == null) return;
 						clickAllowed = false;
 						for (char c : moves.toCharArray()){
@@ -177,6 +186,22 @@ public class MainApplication extends Application {
 								}
 							}
 						}
+						clickAllowed = true;
+					}).start();
+				} else if ((new Rectangle2D(170, 120, 120, 40)).contains(e.getX(), e.getY())){
+					new Thread(() -> {
+						clickAllowed = false;
+						for (int i = moves.size()-1; i >= 0; i--){
+							Move.genericMove(moves.get(i).opposite(), cube);
+							while (Move.animating){
+								try {
+									Thread.sleep(100);		
+								} catch (InterruptedException ex){
+									ex.printStackTrace();
+								}
+							}
+						}
+						moves.clear();
 						clickAllowed = true;
 					}).start();
 				}
@@ -204,6 +229,22 @@ public class MainApplication extends Application {
 					}
 					Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
 				}
+			} else if (tabSelected == 2){
+				if ((new Rectangle2D(30, 60, 120, 40)).contains(e.getX(), e.getY())){
+					String text = askInput("Change cube's size", "Insert new cube's size");
+					try {
+						int i = Integer.parseInt(text);
+						Cube.SIZE = i;
+						cube = new Cube();
+						scene.setRoot(new Group(cube.getModel()));
+					} catch (NumberFormatException ex){
+						ex.printStackTrace();
+					}
+				} else if ((new Rectangle2D(30, 120, 120, 40)).contains(e.getX(), e.getY())){
+					camera.getTransforms().clear();
+					CAMERA_X = -(bounds.getWidth()-100*Cube.SIZE)/2;
+					camera.setTranslateX(CAMERA_X);
+				}
 			}
 		});
 		controls.getChildren().add(canvas);
@@ -223,10 +264,20 @@ public class MainApplication extends Application {
 			double rotY = event.getSceneX() - mouseOldX;
             this.rx -= rotX;
             this.ry += rotY;
-            camera.getTransforms().addAll(new Rotate(-rotX, 100-CAMERA_X, 100-CAMERA_Y, 100-CAMERA_Z, Rotate.X_AXIS), new Rotate(rotY, 100-CAMERA_X, 100-CAMERA_Y, 100-CAMERA_Z, Rotate.Y_AXIS));
+            camera.getTransforms().addAll(new Rotate(-rotX, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_X, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_Y, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_Z, Rotate.X_AXIS), new Rotate(rotY, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_X, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_Y, (Cube.SIZE/2.0+0.5-1)*100-CAMERA_Z, Rotate.Y_AXIS));
             mouseOldX = event.getSceneX();
             mouseOldY = event.getSceneY();
         });
+        
+        onScene.setOnScroll(e -> {
+			camera.getTransforms().clear();
+			if (e.getDeltaY() > 0){
+				CAMERA_Z = camera.getTranslateZ()+50;
+			} else if (e.getDeltaY() < 0){
+				CAMERA_Z = camera.getTranslateZ()-50;
+			}
+			camera.setTranslateZ(CAMERA_Z);
+		});
         
 		VBox layout = new VBox(stackPane, controls);
 		layout.setSpacing(10);
@@ -240,7 +291,7 @@ public class MainApplication extends Application {
 	private void update(GraphicsContext gc, GraphicsContext layer){
 		layer.clearRect(0, 0, layer.getCanvas().getWidth(), layer.getCanvas().getHeight());
 		layer.setFill(Color.BLACK);
-		layer.fillText(String.format("Current move: %s\nMove duration: %d", Move.printAlgorithm(Move.currentMove), Cube.DEFAULT_DURATION), 20, 20);
+		layer.fillText(String.format("Current move: %s\nMove duration: %d\nCube size: %s", Move.printAlgorithm(Move.currentMove), Cube.DEFAULT_DURATION, Cube.SIZE+"x"+Cube.SIZE+"x"+Cube.SIZE), 20, 20);
 		
 		double width = gc.getCanvas().getWidth();
 		double height = gc.getCanvas().getHeight();
@@ -248,10 +299,12 @@ public class MainApplication extends Application {
 		gc.clearRect(0, 0, width, height);
 		gc.setFill(Color.web("#36B367"));
 		gc.fillRect(0, 0, width, height);
-		gc.setFill(tabSelected == 0 ? Color.web("#10F267") : Color.web("#4A6956"));
-		gc.fillRect(0, 0, width/2, 35);
+		gc.setFill(tabSelected == 0 ? Color.web("#10F267") : Color.web("#1B2D22"));
+		gc.fillRect(0, 0, width/3, 35);
 		gc.setFill(tabSelected == 1 ? Color.web("#10F267") : Color.web("#4A6956"));
-		gc.fillRect(width/2, 0, width/2, 35);
+		gc.fillRect(width/3, 0, width/3, 35);
+		gc.setFill(tabSelected == 2 ? Color.web("#10F267") : Color.web("#87AD96"));
+		gc.fillRect(2*width/3, 0, width/3, 35);
 		gc.setFont(new Font("sans-serif", 25));
 		gc.setTextAlign(TextAlignment.CENTER);
 		
@@ -278,12 +331,14 @@ public class MainApplication extends Application {
 			gc.fillRect(30, 120, 120, 40);
 			gc.fillRect(30, 180, 120, 40);
 			gc.fillRect(170, 60, 120, 40);
+			gc.fillRect(170, 120, 120, 40);
 			gc.setFont(new Font("sans-serif", 20));
 			gc.setFill(Color.RED);
 			gc.fillText("Scramble", 35, 85);
 			gc.fillText("Solve", 35, 145);
 			gc.fillText("Solving Alg.", 35, 205);
 			gc.fillText("Input", 175, 85);
+			gc.fillText("Rebuild", 175, 145);
 			gc.setTextAlign(TextAlignment.CENTER);
 			
 			for (int i = 0; i < 4; i++){
@@ -294,6 +349,15 @@ public class MainApplication extends Application {
 				gc.setFill(Color.RED);
 				gc.fillText(speeds[i], x+35/2, y+35/2+5);
 			}
+		} else if (tabSelected == 2){
+			gc.setTextAlign(TextAlignment.LEFT);
+			gc.setFill(Color.web("#1E6D3D"));
+			gc.fillRect(30, 60, 120, 40);
+			gc.fillRect(30, 120, 120, 40);
+			gc.setFont(new Font("sans-serif", 20));
+			gc.setFill(Color.RED);
+			gc.fillText("Set size", 35, 85);
+			gc.fillText("Center", 35, 145);
 		}
 		
 		if (!clickAllowed){
@@ -303,5 +367,13 @@ public class MainApplication extends Application {
 			gc.fillRect(0, 0, width, height);
 			gc.restore();
 		}
+	}
+	
+	private static String askInput(String title, String message){
+		TextInputDialog dialog = new TextInputDialog();
+		dialog.setTitle(title);
+		dialog.setHeaderText(message);
+		dialog.showAndWait();
+		return dialog.getEditor().getText();
 	}
 }
