@@ -156,6 +156,7 @@ public class MainApplication extends Application {
 					}).start();
 				} else if ((new Rectangle2D(30, 120, 120, 40)).contains(e.getX(), e.getY())){
 					if (Cube.SIZE == 3){
+						moves.clear();
 						cube.solve();
 					} else {
 						Alert alert = new Alert(Alert.AlertType.INFORMATION);
