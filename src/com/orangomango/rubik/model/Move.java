@@ -112,7 +112,7 @@ public class Move {
 	}
 	
 	public static Wrapper randomMove(Random random, Cube cube){
-		Wrapper w = new Wrapper(random.nextInt(3), random.nextInt(Cube.SIZE), random.nextInt(2) == 0 ? 1 : -1);
+		Wrapper w = new Wrapper(random.nextInt(3), Cube.SIZE == 3 ? (random.nextBoolean() ? 0 : 2) : random.nextInt(Cube.SIZE), random.nextInt(2) == 0 ? 1 : -1);
 		genericMove(w, cube);
 		return w;
 	}
