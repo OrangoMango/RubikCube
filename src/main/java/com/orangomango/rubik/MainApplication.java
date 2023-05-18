@@ -14,6 +14,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.TextInputDialog;
 import javafx.animation.*;
 import javafx.scene.text.Font;
+import javafx.scene.image.Image;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import java.util.*;
@@ -34,7 +35,7 @@ public class MainApplication extends Application {
 	private List<Move.Wrapper> moves = new ArrayList<>();
 	private Cube cube;
 	
-	private static final Rectangle2D bounds = new Rectangle2D(0, 0, 420, 840);
+	private static final Rectangle2D bounds = new Rectangle2D(0, 0, 420, 740);
 	private static double CAMERA_X = -110;
 	private static final double CAMERA_Y = -200;
 	private static double CAMERA_Z = -350;
@@ -80,7 +81,7 @@ public class MainApplication extends Application {
 		GraphicsContext layer = onScene.getGraphicsContext2D();
 		stackPane.getChildren().addAll(scene, onScene);
 		
-		Canvas canvas = new Canvas(scene.getWidth(), bounds.getHeight()*0.30);
+		Canvas canvas = new Canvas(scene.getWidth(), bounds.getHeight()*0.33);
 		canvas.setOnMousePressed(e -> {
 			if (!clickAllowed) return;
 			if ((new Rectangle2D(0, 0, canvas.getWidth()/3, 35)).contains(e.getX(), e.getY())){
@@ -286,6 +287,7 @@ public class MainApplication extends Application {
 		
 		stage.setScene(new Scene(layout, bounds.getWidth(), bounds.getHeight()));
 		stage.setTitle("Rubik's cube");
+		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
 		stage.show();
 	}
 	
