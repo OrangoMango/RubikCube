@@ -25,7 +25,7 @@ public class Cube{
 	
 	public static int SIZE = 3;
 	public static final int INNER_CUBE_WIDTH = 100;
-	public static int DEFAULT_DURATION = 180;
+	public static int DEFAULT_DURATION = 80;
 	public static int MOVE_DURATION = DEFAULT_DURATION;
 	public static final int SCRAMBLE_MOVES = 70;
 	

@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import com.orangomango.rubik.MainApplication;
 
-public class CubeSolver{
+public class CubeSolver{ // Layers method
 	private Cube cube;
 
 	private static final String T_RIGHT = "drdRDFDf";
@@ -31,7 +31,6 @@ public class CubeSolver{
 		// Make corners
 		for (int i = 0; i < 4; i++){
 			makeCorner(solution);
-			//System.out.println("-> "+solution);
 			if (i != 3){
 				turnCubeY(solution, 1);
 			}
@@ -41,7 +40,6 @@ public class CubeSolver{
 		// Make edges
 		for (int i = 0; i < 4; i++){
 			makeEdge(solution);
-			//System.out.println("-> "+solution);
 			if (i != 3){
 				turnCubeY(solution, 1);
 			}
@@ -51,7 +49,6 @@ public class CubeSolver{
 		for (int i = 0; i < 4; i++){
 			makeRightT(solution);
 			makeLeftT(solution);
-			//System.out.println("-> "+solution);
 			if (i != 4){
 				turnCubeY(solution, 1);
 			}
@@ -79,8 +76,6 @@ public class CubeSolver{
 		makeBottomEdges(solution);
 		makeBottomEdges(solution);
 		
-		//System.out.println(solution);
-		
 		if (solution.size() == 0) return null;
 		
 		// ------------ Reset -----------------
@@ -95,8 +90,6 @@ public class CubeSolver{
 		
 		makeMove(opposite, new ArrayList<String>());
 		Move.ANIMATION = true;
-		
-		//Cube.MOVE_DURATION = 2000; // Temp
 		
 		if (sol.length() == 0) return null;
 		
@@ -225,18 +218,10 @@ public class CubeSolver{
 		} else if (!cube.findCubeByViewCoords(1, 2, 2).isInCorrectPlace(cube) && !cube.findCubeByViewCoords(0, 2, 1).isInCorrectPlace(cube) && !cube.findCubeByViewCoords(1, 2, 0).isInCorrectPlace(cube)){
 			turnCubeY(solution, -1);
 			makeTriangle(solution);
-		} else {
-			System.out.println("Already correct");
 		}
 	}
 	
 	private void turnBottomEdges(List<String> solution){
-		/*
-		 *           1 2 0
-		 * 	   0 2 1        2 2 1
-		 *           1 2 2
-		 */
-		
 		if (cube.findCubeByViewCoords(1, 2, 0).getFaceSystem().getBottomFace() != cube.getFaces().getBottomFace() && cube.findCubeByViewCoords(0, 2, 1).getFaceSystem().getBottomFace() != cube.getFaces().getBottomFace()){
 			makeMove(TURN_BOTTOM_EDGES, solution);
 		} else if (cube.findCubeByViewCoords(1, 2, 0).getFaceSystem().getBottomFace() != cube.getFaces().getBottomFace() && cube.findCubeByViewCoords(2, 2, 1).getFaceSystem().getBottomFace() != cube.getFaces().getBottomFace()){
@@ -263,8 +248,6 @@ public class CubeSolver{
 			turnCubeY(solution, 1);
 			turnBottomEdges(solution);
 			return;
-		} else {
-			System.out.println("Already correct");
 		}
 	}
 	
@@ -306,7 +289,6 @@ public class CubeSolver{
 		}
 		if (piece1.getFaceSystem().getFrontFace() == same && piece2.getFaceSystem().getFrontFace() == same){
 			// Ok!
-			System.out.println("Already correct");
 		} else if (piece1.getFaceSystem().getBottomFace() == same && piece2.getFaceSystem().getBottomFace() == same){
 			makeMove(TURN_CORNERS, solution);
 		} else if (piece1.getFaceSystem().getLeftFace() == same && piece2.getFaceSystem().getRightFace() == same){
@@ -324,7 +306,6 @@ public class CubeSolver{
 	private void makeRightT(List<String> solution){
 		InnerCube piece = this.cube.findCubesByColor(cube.getFaces().getFrontFace(), cube.getFaces().getRightFace()).get(0);
 		if (piece.isInCorrectPlace(cube)){
-			System.out.println("Already correct");
 			return;
 		}
 		if (piece.getViewCoords(cube).getY() == 1){
@@ -367,7 +348,6 @@ public class CubeSolver{
 	private void makeLeftT(List<String> solution){
 		InnerCube piece = this.cube.findCubesByColor(cube.getFaces().getFrontFace(), cube.getFaces().getLeftFace()).get(0);
 		if (piece.isInCorrectPlace(cube)){
-			System.out.println("Already correct");
 			return;
 		}
 		if (piece.getViewCoords(cube).getY() == 1){
@@ -410,7 +390,6 @@ public class CubeSolver{
 	private void makeEdge(List<String> solution){
 		InnerCube piece = this.cube.findCubesByColor(cube.getFaces().getFrontFace(), cube.getFaces().getTopFace()).get(0);
 		if (piece.isInCorrectPlace(cube)){
-			System.out.println("Already correct");
 			return;
 		}
 		boolean down = false;
@@ -471,7 +450,6 @@ public class CubeSolver{
 	private void makeCorner(List<String> solution){
 		InnerCube piece = this.cube.findCubesByColor(cube.getFaces().getFrontFace(), cube.getFaces().getTopFace(), cube.getFaces().getLeftFace()).get(0);
 		if (piece.isInCorrectPlace(cube)){
-			System.out.println("Already correct");
 			return;
 		}
 		if (piece.getViewCoords(cube).getY() == 0){

@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.SubScene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.PerspectiveCamera;
+import javafx.scene.AmbientLight;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -71,7 +72,7 @@ public class MainApplication extends Application {
 		StackPane controls = new StackPane();
 		StackPane stackPane = new StackPane();
 		
-		SubScene scene = new SubScene(new Group(cube.getModel()), bounds.getWidth()-10, bounds.getHeight()*0.65, true, SceneAntialiasing.BALANCED);
+		SubScene scene = new SubScene(new Group(cube.getModel(), new AmbientLight()), bounds.getWidth()-10, bounds.getHeight()*0.65, true, SceneAntialiasing.BALANCED);
 		scene.setFocusTraversable(true);
 		scene.setFill(Color.CYAN);
 		scene.setCamera(camera);
@@ -129,7 +130,7 @@ public class MainApplication extends Application {
 						else if (selectedX == 5) cube.rotateCubeY(-1);
 						else if (selectedX == 6){
 							cube.generateCube();
-							scene.setRoot(new Group(cube.getModel()));
+							scene.setRoot(new Group(cube.getModel(), new AmbientLight()));
 							cube.getRotateX().setAngle(45);
 							cube.getRotateY().setAngle(-45);
 							cube.getRotateZ().setAngle(0);
@@ -217,16 +218,16 @@ public class MainApplication extends Application {
 				if (selected != -1){
 					switch (selected){
 						case 0:
-							Cube.DEFAULT_DURATION = 600;
+							Cube.DEFAULT_DURATION = 360;
 							break;
 						case 1:
-							Cube.DEFAULT_DURATION = 300;
-							break;
-						case 2:
 							Cube.DEFAULT_DURATION = 180;
 							break;
-						case 3:
+						case 2:
 							Cube.DEFAULT_DURATION = 80;
+							break;
+						case 3:
+							Cube.DEFAULT_DURATION = 40;
 							break;
 					}
 					Cube.MOVE_DURATION = Cube.DEFAULT_DURATION;
